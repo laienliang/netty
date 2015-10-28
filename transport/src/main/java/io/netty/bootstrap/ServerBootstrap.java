@@ -180,8 +180,10 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
                 ChannelPipeline pipeline = ch.pipeline();
                 ChannelHandler handler = handler();
                 if (handler != null) {
+                	// 把自定义的handler注册到pipeline
                     pipeline.addLast(handler);
                 }
+                // 额外增加一个handler:ServerBootstrapAcceptor
                 pipeline.addLast(new ServerBootstrapAcceptor(
                         currentChildGroup, currentChildHandler, currentChildOptions, currentChildAttrs));
             }

@@ -83,6 +83,7 @@ public abstract class AbstractNioChannel extends AbstractChannel {
         this.ch = ch;
         this.readInterestOp = readInterestOp;
         try {
+        	// 把serverSocketChannel设置成非阻塞
             ch.configureBlocking(false);
         } catch (IOException e) {
             try {
@@ -328,6 +329,9 @@ public abstract class AbstractNioChannel extends AbstractChannel {
         return loop instanceof NioEventLoop;
     }
 
+    /**
+     * 监听
+     */
     @Override
     protected void doRegister() throws Exception {
         boolean selected = false;

@@ -57,6 +57,7 @@ public abstract class SingleThreadEventLoop extends SingleThreadEventExecutor im
             throw new NullPointerException("promise");
         }
 
+        // 
         channel.unsafe().register(this, promise);
         return promise;
     }

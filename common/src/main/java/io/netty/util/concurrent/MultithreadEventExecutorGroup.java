@@ -227,6 +227,7 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
     private final class GenericEventExecutorChooser implements EventExecutorChooser {
         @Override
         public EventExecutor next() {
+        	// 取模，均衡分配线程
             return children[Math.abs(childIndex.getAndIncrement() % children.length)];
         }
     }

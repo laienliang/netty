@@ -260,6 +260,7 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
      * Create a new {@link Channel} and bind it.
      */
     public ChannelFuture bind(SocketAddress localAddress) {
+    	// 校验必填项：group,channel
         validate();
         if (localAddress == null) {
             throw new NullPointerException("localAddress");
@@ -303,6 +304,8 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
     }
 
     final ChannelFuture initAndRegister() {
+    	// 通过channel的工厂类，通过反射生成一个channel
+    	// 服务端对应的NioServerSocketChannel, 客户端对应NioSocketChannel
         final Channel channel = channelFactory().newChannel();
         try {
             init(channel);
@@ -312,6 +315,7 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
             return new DefaultChannelPromise(channel, GlobalEventExecutor.INSTANCE).setFailure(t);
         }
 
+        // 把channel注册到一个io线程上
         ChannelFuture regFuture = group().register(channel);
         if (regFuture.cause() != null) {
             if (channel.isRegistered()) {
