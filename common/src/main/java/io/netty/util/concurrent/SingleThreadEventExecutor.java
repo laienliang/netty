@@ -103,12 +103,14 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
         this.parent = parent;
         this.addTaskWakesUp = addTaskWakesUp;
 
+        // 线程工厂创建boss线程
         thread = threadFactory.newThread(new Runnable() {
             @Override
             public void run() {
                 boolean success = false;
                 updateLastExecutionTime();
                 try {
+                	// NioEventLoop.run()方法，不断的去监听selector
                     SingleThreadEventExecutor.this.run();
                     success = true;
                 } catch (Throwable t) {
@@ -155,6 +157,7 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
             }
         });
         threadProperties = new DefaultThreadProperties(thread);
+        // 同时创建该线程私有的任务队列
         taskQueue = newTaskQueue();
     }
 

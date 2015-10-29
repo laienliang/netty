@@ -57,8 +57,11 @@ public abstract class AbstractNioChannel extends AbstractChannel {
         CLOSED_CHANNEL_EXCEPTION.setStackTrace(EmptyArrays.EMPTY_STACK_TRACE);
     }
 
+    // nio channel
     private final SelectableChannel ch;
+    // 初始化为accept
     protected final int readInterestOp;
+    
     volatile SelectionKey selectionKey;
     private volatile boolean inputShutdown;
     private volatile boolean readPending;
@@ -79,6 +82,7 @@ public abstract class AbstractNioChannel extends AbstractChannel {
      * @param readInterestOp    the ops to set to receive data from the {@link SelectableChannel}
      */
     protected AbstractNioChannel(Channel parent, SelectableChannel ch, int readInterestOp) {
+    	// 会在父类构造方法初始化channelPipeline
         super(parent);
         this.ch = ch;
         this.readInterestOp = readInterestOp;
@@ -337,6 +341,7 @@ public abstract class AbstractNioChannel extends AbstractChannel {
         boolean selected = false;
         for (;;) {
             try {
+            	// 向多路复用器注册事件（0----没有监听任何事件,可看SelectionKey中定义的网络事件）
                 selectionKey = javaChannel().register(eventLoop().selector, 0, this);
                 return;
             } catch (CancelledKeyException e) {
@@ -373,8 +378,10 @@ public abstract class AbstractNioChannel extends AbstractChannel {
 
         readPending = true;
 
+        // 该值初始化为0,看doRegister方法
         final int interestOps = selectionKey.interestOps();
         if ((interestOps & readInterestOp) == 0) {
+        	// | 运算在这里是增加一个事件，至此向selector中监听了一个accept事件，当有客户连接进来时，会触发acctept事件
             selectionKey.interestOps(interestOps | readInterestOp);
         }
     }

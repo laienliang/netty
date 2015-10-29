@@ -53,14 +53,17 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
 
         children = new SingleThreadEventExecutor[nThreads];
         if (isPowerOfTwo(children.length)) {
+        	// 如果线程长度刚好是2的N次方，采用按位与选择器，推荐
             chooser = new PowerOfTwoEventExecutorChooser();
         } else {
+        	// 按一般的取模
             chooser = new GenericEventExecutorChooser();
         }
 
         for (int i = 0; i < nThreads; i ++) {
             boolean success = false;
             try {
+            	// 生成线程，放到数组里面
                 children[i] = newChild(threadFactory, args);
                 success = true;
             } catch (Exception e) {
@@ -220,6 +223,7 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
     private final class PowerOfTwoEventExecutorChooser implements EventExecutorChooser {
         @Override
         public EventExecutor next() {
+        	// 按位与
             return children[childIndex.getAndIncrement() & children.length - 1];
         }
     }

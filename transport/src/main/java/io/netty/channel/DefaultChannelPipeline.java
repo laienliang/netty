@@ -814,9 +814,12 @@ final class DefaultChannelPipeline implements ChannelPipeline {
 
     @Override
     public ChannelPipeline fireChannelActive() {
+    	
+    	// 从head-->handlers--->tail执行channelActive
         head.fireChannelActive();
 
         if (channel.config().isAutoRead()) {
+        	// 最终会执行head的read方法
             channel.read();
         }
 
@@ -1086,6 +1089,7 @@ final class DefaultChannelPipeline implements ChannelPipeline {
         public void bind(
                 ChannelHandlerContext ctx, SocketAddress localAddress, ChannelPromise promise)
                 throws Exception {
+        	// 服务端启动时绑定端口
             unsafe.bind(localAddress, promise);
         }
 

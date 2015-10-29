@@ -85,6 +85,7 @@ public abstract class ByteToMessageDecoder extends ChannelInboundHandlerAdapter 
                 // See:
                 // - https://github.com/netty/netty/issues/2327
                 // - https://github.com/netty/netty/issues/1764
+            	// 超出了缓存的可写范围，扩展buffer
                 buffer = expandCumulation(alloc, cumulation, in.readableBytes());
             } else {
                 buffer = cumulation;
@@ -232,15 +233,20 @@ public abstract class ByteToMessageDecoder extends ChannelInboundHandlerAdapter 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         if (msg instanceof ByteBuf) {
+        	// 通过该handler处理后的输出
             RecyclableArrayList out = RecyclableArrayList.newInstance();
             try {
                 ByteBuf data = (ByteBuf) msg;
+                // 判断半包缓存中没有数据，来确定并非半包数据
                 first = cumulation == null;
                 if (first) {
+                	// 缓存中没有半包数据，直接把当前的消息赋给缓存
                     cumulation = data;
                 } else {
+                	// 如果存在半包数据，则往半包缓存上积累当前消息
                     cumulation = cumulator.cumulate(ctx.alloc(), cumulation, data);
                 }
+                // 对当前收到的消息加上缓存中的半包作为一个消息进行解码处理
                 callDecode(ctx, cumulation, out);
             } catch (DecoderException e) {
                 throw e;
@@ -344,8 +350,12 @@ public abstract class ByteToMessageDecoder extends ChannelInboundHandlerAdapter 
     protected void callDecode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) {
         try {
             while (in.isReadable()) {
+            	// 记录原来已解码出来的消息记录数，然后再进行本次解码
                 int outSize = out.size();
+                // 记录原来可读的长度
                 int oldInputLength = in.readableBytes();
+                
+                // 进行业务解码，由用户自定义
                 decode(ctx, in, out);
 
                 // Check if this handler was removed before continuing the loop.
@@ -353,17 +363,22 @@ public abstract class ByteToMessageDecoder extends ChannelInboundHandlerAdapter 
                 //
                 // See https://github.com/netty/netty/issues/1664
                 if (ctx.isRemoved()) {
+                	// 如果当前handler都已经被移出了pipeline中，那么就放弃解码
                     break;
                 }
 
+                // 解码后与解码前，解码出来的消息数一样，说明这次解码没有成功：1、用户根本没有消费消息，说明是个半包消息，2、如果用户消费了消息，说明还可以继续消费
                 if (outSize == out.size()) {
                     if (oldInputLength == in.readableBytes()) {
+                    	// 1、用户根本没有消费消息，说明是个半包消息，跳出消费消息的循环，待读取后续的数据报文
                         break;
                     } else {
+                    	// 2、继续解码
                         continue;
                     }
                 }
 
+                // 如果用户没有消息消息，但却解码 出了新的对象，说明有问题，直接抛异常，隐藏：outSize != out.size()
                 if (oldInputLength == in.readableBytes()) {
                     throw new DecoderException(
                             StringUtil.simpleClassName(getClass()) +
