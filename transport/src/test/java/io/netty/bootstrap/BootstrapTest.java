@@ -223,6 +223,7 @@ public class BootstrapTest {
 
         @Override
         public ChannelFuture register(Channel channel) {
+        	// 从线程池里获取一个线程
             super.register(channel).syncUninterruptibly();
             promise = channel.newPromise();
             return promise;

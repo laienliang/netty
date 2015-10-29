@@ -86,34 +86,47 @@ public class LineBasedFrameDecoder extends ByteToMessageDecoder {
      *                          be created.
      */
     protected Object decode(ChannelHandlerContext ctx, ByteBuf buffer) throws Exception {
+    	// 找到换行符：\n或者回车换行符：\r\n所在位置
         final int eol = findEndOfLine(buffer);
         if (!discarding) {
+        	// discarding用天保护内存不泄漏，假如一个输入一直没有换行符的话，会把内存撑爆
             if (eol >= 0) {
+            	// 解释到了换行符
                 final ByteBuf frame;
                 final int length = eol - buffer.readerIndex();
                 final int delimLength = buffer.getByte(eol) == '\r'? 2 : 1;
 
                 if (length > maxLength) {
+                	// 消息的长度超过来最大长度，重设置读标识，把该消息丢失掉，防止内存泄漏
                     buffer.readerIndex(eol + delimLength);
                     fail(ctx, length);
                     return null;
                 }
 
                 if (stripDelimiter) {
+                	// 不需要解释换行作为output
+                	
+                	// 切片，获得消息
                     frame = buffer.readSlice(length);
+                    // 忽略掉换行符
                     buffer.skipBytes(delimLength);
                 } else {
+                	// 把消息跟换行符一起作为output返回
                     frame = buffer.readSlice(length + delimLength);
                 }
 
                 return frame.retain();
             } else {
+            	// 没找到换行符
                 final int length = buffer.readableBytes();
                 if (length > maxLength) {
                     discardedBytes = length;
+                    
+                    // 输入流的长度已超过来用户指定的最大长度，重设置读标识，把该消息丢失掉，防止内存泄漏
                     buffer.readerIndex(buffer.writerIndex());
                     discarding = true;
                     if (failFast) {
+                    	// 如果超过长度需要抛异常，则抛异常：fireExceptionCaught
                         fail(ctx, "over " + discardedBytes);
                     }
                 }
@@ -127,6 +140,7 @@ public class LineBasedFrameDecoder extends ByteToMessageDecoder {
                 discardedBytes = 0;
                 discarding = false;
                 if (!failFast) {
+                	// 如果超过长度需要抛异常，则抛异常：fireExceptionCaught
                     fail(ctx, length);
                 }
             } else {

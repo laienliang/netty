@@ -195,6 +195,7 @@ public class NioSocketChannel extends AbstractNioByteChannel implements io.netty
 
     @Override
     protected void doBind(SocketAddress localAddress) throws Exception {
+    	// nio方法的绑定
         javaChannel().socket().bind(localAddress);
     }
 

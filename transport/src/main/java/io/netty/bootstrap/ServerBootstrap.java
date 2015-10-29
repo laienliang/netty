@@ -180,10 +180,10 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
                 ChannelPipeline pipeline = ch.pipeline();
                 ChannelHandler handler = handler();
                 if (handler != null) {
-                	// 把自定义的handler注册到pipeline
+                	// 把自定义的boss handler注册到pipeline
                     pipeline.addLast(handler);
                 }
-                // 额外增加一个handler:ServerBootstrapAcceptor
+                // 额外增加一个handler:ServerBootstrapAcceptor，加入child的handler
                 pipeline.addLast(new ServerBootstrapAcceptor(
                         currentChildGroup, currentChildHandler, currentChildOptions, currentChildAttrs));
             }
@@ -232,6 +232,8 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
         @Override
         @SuppressWarnings("unchecked")
         public void channelRead(ChannelHandlerContext ctx, Object msg) {
+        	
+        	// 这里的msg实际是eventloop在accept到客户端收到的channel，通过pipeline.fireChannelRead(readBuf.get(i));传递过来，并非实际上的msg
             final Channel child = (Channel) msg;
 
             child.pipeline().addLast(childHandler);
@@ -251,6 +253,7 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
             }
 
             try {
+            	// 从wokrerGroup中获取一个线程，把channel绑定到该线程中，把child channelHandler注册到当前ChildChannel
                 childGroup.register(child).addListener(new ChannelFutureListener() {
                     @Override
                     public void operationComplete(ChannelFuture future) throws Exception {

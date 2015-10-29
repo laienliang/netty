@@ -265,10 +265,12 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
         if (localAddress == null) {
             throw new NullPointerException("localAddress");
         }
+        // 绑定端口
         return doBind(localAddress);
     }
 
     private ChannelFuture doBind(final SocketAddress localAddress) {
+    	// 初始化channel并进行注册：1、把channel与线程关联，2、注册channel上的handler
         final ChannelFuture regFuture = initAndRegister();
         final Channel channel = regFuture.channel();
         if (regFuture.cause() != null) {
@@ -278,6 +280,7 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
         if (regFuture.isDone()) {
             // At this point we know that the registration was complete and successful.
             ChannelPromise promise = channel.newPromise();
+            // 注册成功后，绑定端口
             doBind0(regFuture, channel, localAddress, promise);
             return promise;
         } else {
@@ -308,6 +311,7 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
     	// 服务端对应的NioServerSocketChannel, 客户端对应NioSocketChannel
         final Channel channel = channelFactory().newChannel();
         try {
+        	// 初始化channel,设置tcp参数，channel的属性（attr）
             init(channel);
         } catch (Throwable t) {
             channel.unsafe().closeForcibly();
@@ -315,9 +319,11 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
             return new DefaultChannelPromise(channel, GlobalEventExecutor.INSTANCE).setFailure(t);
         }
 
-        // 把channel注册到一个io线程上
+        // 把channel注册到一个boss io线程上，当前channel注册到selector中
+        // MultithreadEventLoopGroup.register()
         ChannelFuture regFuture = group().register(channel);
         if (regFuture.cause() != null) {
+        	// 注册结果---失败，关闭连接
             if (channel.isRegistered()) {
                 channel.close();
             } else {
@@ -349,6 +355,7 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
             @Override
             public void run() {
                 if (regFuture.isSuccess()) {
+                	// outBound事件，交由pipeline的header来处理绑定
                     channel.bind(localAddress, promise).addListener(ChannelFutureListener.CLOSE_ON_FAILURE);
                 } else {
                     promise.setFailure(regFuture.cause());

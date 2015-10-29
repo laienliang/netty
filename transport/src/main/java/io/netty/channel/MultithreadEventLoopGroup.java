@@ -61,6 +61,7 @@ public abstract class MultithreadEventLoopGroup extends MultithreadEventExecutor
 
     @Override
     public ChannelFuture register(Channel channel) {
+    	// 从线程池里取其中一个线，把channel与之关联
         return next().register(channel);
     }
 

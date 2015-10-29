@@ -413,11 +413,18 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                 return;
             }
 
+            // 把从线程池中获取到的池程绑定到当前的channel，至上，该channel上所有事件都由该线程执行
             AbstractChannel.this.eventLoop = eventLoop;
 
+            /**
+             * 判断当前运行着的线程(Thread.currentThread())是否与channel已关联上的线程是同一个
+             * 
+             */            
             if (eventLoop.inEventLoop()) {
+            	// 同一个线程，可以直接运行
                 register0(promise);
             } else {
+            	// 不同线程，新建一个任务，由channel关联着的线程来运行，保证同一个channel上的操作都由同一个线程执行
                 try {
                     eventLoop.execute(new OneTimeTask() {
                         @Override
@@ -444,10 +451,12 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                     return;
                 }
                 boolean firstRegistration = neverRegistered;
+                // AbstractNioChannel
                 doRegister();
                 neverRegistered = false;
                 registered = true;
                 safeSetSuccess(promise);
+                // 执行ChannelInitializer的initChannel方法，往pipeline中注册用户自定义handler
                 pipeline.fireChannelRegistered();
                 // Only fire a channelActive if the channel has never been registered. This prevents firing
                 // multiple channel actives if the channel is deregistered and re-registered.
@@ -483,6 +492,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
 
             boolean wasActive = isActive();
             try {
+            	// 真正的绑定方法 NioServerSocketChannel
                 doBind(localAddress);
             } catch (Throwable t) {
                 safeSetFailure(promise, t);
@@ -490,15 +500,18 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                 return;
             }
 
+            // 判断第一次绑定成功
             if (!wasActive && isActive()) {
                 invokeLater(new OneTimeTask() {
                     @Override
                     public void run() {
+                    	// 触发channel的active方法
                         pipeline.fireChannelActive();
                     }
                 });
             }
 
+            
             safeSetSuccess(promise);
         }
 
@@ -681,6 +694,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
             }
 
             try {
+            	// 向selector中注册accept事件
                 doBeginRead();
             } catch (final Exception e) {
                 invokeLater(new OneTimeTask() {

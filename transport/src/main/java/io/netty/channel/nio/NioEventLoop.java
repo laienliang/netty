@@ -112,17 +112,23 @@ public final class NioEventLoop extends SingleThreadEventLoop {
     private boolean needsToSelectAgain;
 
     NioEventLoop(NioEventLoopGroup parent, ThreadFactory threadFactory, SelectorProvider selectorProvider) {
-        super(parent, threadFactory, false);
+        
+    	// 创建boss线程
+    	super(parent, threadFactory, false);
         if (selectorProvider == null) {
             throw new NullPointerException("selectorProvider");
         }
+        
         provider = selectorProvider;
+        // 通过nio的api生成一个多路复用器,并与当前线程关联
         selector = openSelector();
     }
 
     private Selector openSelector() {
         final Selector selector;
         try {
+        	// 待价于Selector.open();
+        	// Selector selector = Selector.open();
             selector = provider.openSelector();
         } catch (IOException e) {
             throw new ChannelException("failed to open a new selector", e);
@@ -304,9 +310,12 @@ public final class NioEventLoop extends SingleThreadEventLoop {
         for (;;) {
             boolean oldWakenUp = wakenUp.getAndSet(false);
             try {
+            	// 存在非io任务
                 if (hasTasks()) {
+                	// 不阻塞，直接返回
                     selectNow();
                 } else {
+                	// 阻塞等待io网络事件
                     select(oldWakenUp);
 
                     // 'wakenUp.compareAndSet(false, true)' is always evaluated
@@ -344,16 +353,20 @@ public final class NioEventLoop extends SingleThreadEventLoop {
 
                 cancelledKeys = 0;
                 needsToSelectAgain = false;
+                // 默认50，非io任务的执行时间不能超过io任务的执行时间
                 final int ioRatio = this.ioRatio;
                 if (ioRatio == 100) {
+                	// 如果是100的话，任务执行时间比率不生效，无论io还是非io任务都执行完成为止
                     processSelectedKeys();
                     runAllTasks();
                 } else {
                     final long ioStartTime = System.nanoTime();
-
+                    // 执行io事件
                     processSelectedKeys();
-
+                    // 执行io任务所花费的时间
                     final long ioTime = System.nanoTime() - ioStartTime;
+                    // 执行非io任务 ：ioTime : nioTime = ioRatio : nioRatio
+                    // 在执行的时间内还没有完成的话，就直接返回，待下一轮运行时再执行非io任务
                     runAllTasks(ioTime * (100 - ioRatio) / ioRatio);
                 }
 

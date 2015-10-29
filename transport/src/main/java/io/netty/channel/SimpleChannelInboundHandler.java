@@ -99,9 +99,11 @@ public abstract class SimpleChannelInboundHandler<I> extends ChannelInboundHandl
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         boolean release = true;
         try {
+        	// 判断msg跟泛型的类型是否匹配
             if (acceptInboundMessage(msg)) {
                 @SuppressWarnings("unchecked")
                 I imsg = (I) msg;
+                // 模板方法，由子类来实现，子类操作的输入已经是泛型指定的对象
                 channelRead0(ctx, imsg);
             } else {
                 release = false;
