@@ -451,7 +451,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                     return;
                 }
                 boolean firstRegistration = neverRegistered;
-                // AbstractNioChannel
+          
                 doRegister();
                 neverRegistered = false;
                 registered = true;
