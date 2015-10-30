@@ -451,7 +451,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                     return;
                 }
                 boolean firstRegistration = neverRegistered;
-                // AbstractNioChannel
+          
                 doRegister();
                 neverRegistered = false;
                 registered = true;
@@ -461,6 +461,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                 // Only fire a channelActive if the channel has never been registered. This prevents firing
                 // multiple channel actives if the channel is deregistered and re-registered.
                 if (firstRegistration && isActive()) {
+                	// 触发channelactive方法，同时会真正监听accept事件
                     pipeline.fireChannelActive();
                 }
             } catch (Throwable t) {

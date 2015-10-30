@@ -355,7 +355,7 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
             @Override
             public void run() {
                 if (regFuture.isSuccess()) {
-                	// outBound事件，交由pipeline的header来处理绑定
+                	// outBound事件，父类abstarctChannel实现，交由pipeline的header来处理绑定
                     channel.bind(localAddress, promise).addListener(ChannelFutureListener.CLOSE_ON_FAILURE);
                 } else {
                     promise.setFailure(regFuture.cause());
