@@ -210,6 +210,7 @@ public abstract class AbstractNioChannel extends AbstractChannel {
 
                 boolean wasActive = isActive();
                 if (doConnect(remoteAddress, localAddress)) {
+                	// 连接成功
                     fulfillConnectPromise(promise, wasActive);
                 } else {
                     connectPromise = promise;
@@ -381,7 +382,10 @@ public abstract class AbstractNioChannel extends AbstractChannel {
         // 该值初始化为0,看doRegister方法
         final int interestOps = selectionKey.interestOps();
         if ((interestOps & readInterestOp) == 0) {
-        	// | 运算在这里是增加一个事件，至此向selector中监听了一个accept事件，当有客户连接进来时，会触发acctept事件
+        	// | 运算在这里是增加一个事件，
+        	//  对于服务端至此向selector中监听了一个accept事件，当有客户连接进来时，会触发acctept事件
+        	// 对于客户端，向selector中监听了一个read事件,当服务端有数据时，会触发read事件
+        	
             selectionKey.interestOps(interestOps | readInterestOp);
         }
     }

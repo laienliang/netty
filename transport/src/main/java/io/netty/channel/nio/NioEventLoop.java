@@ -535,6 +535,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
                 // remove OP_CONNECT as otherwise Selector.select(..) will always return without blocking
                 // See https://github.com/netty/netty/issues/924
                 int ops = k.interestOps();
+                // 不需要再关注connect事件,但需要保留关注的非connect事件
                 ops &= ~SelectionKey.OP_CONNECT;
                 k.interestOps(ops);
 

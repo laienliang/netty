@@ -1098,6 +1098,7 @@ final class DefaultChannelPipeline implements ChannelPipeline {
                 ChannelHandlerContext ctx,
                 SocketAddress remoteAddress, SocketAddress localAddress,
                 ChannelPromise promise) throws Exception {
+        	// 客户端连接远程端口
             unsafe.connect(remoteAddress, localAddress, promise);
         }
 
@@ -1118,6 +1119,7 @@ final class DefaultChannelPipeline implements ChannelPipeline {
 
         @Override
         public void read(ChannelHandlerContext ctx) {
+        	
             unsafe.beginRead();
         }
 

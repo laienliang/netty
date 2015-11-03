@@ -123,6 +123,7 @@ public class Bootstrap extends AbstractBootstrap<Bootstrap, Channel> {
         if (remoteAddress == null) {
             throw new NullPointerException("remoteAddress");
         }
+        // 校验group与channel工厂已设置
         validate();
         return doConnect(remoteAddress, localAddress);
     }
@@ -131,6 +132,7 @@ public class Bootstrap extends AbstractBootstrap<Bootstrap, Channel> {
      * @see {@link #connect()}
      */
     private ChannelFuture doConnect(final SocketAddress remoteAddress, final SocketAddress localAddress) {
+    	// 1、创建SocketChannel 2、初始化SocketChannel的opts和attr 3、从BossGroup中取一个线程跟channel绑定
         final ChannelFuture regFuture = initAndRegister();
         final Channel channel = regFuture.channel();
         if (regFuture.cause() != null) {
@@ -139,6 +141,7 @@ public class Bootstrap extends AbstractBootstrap<Bootstrap, Channel> {
 
         final ChannelPromise promise = channel.newPromise();
         if (regFuture.isDone()) {
+        	// socketchannel.connect(remoteAdderss) 调用jdk底层的connect
             doConnect0(regFuture, channel, remoteAddress, localAddress, promise);
         } else {
             regFuture.addListener(new ChannelFutureListener() {
